@@ -918,6 +918,26 @@ void xfrm_xfrma_print(struct rtattr *tb[], __u16 family,
 		fprintf(fp, "tfcpad %u", tfcpad);
 		fprintf(fp, "%s", _SL_);
 	}
+	if (tb[XFRMA_IPTFS_PKT_SIZE] || tb[XFRMA_IPTFS_MAX_QSIZE] ||
+	    tb[XFRMA_IPTFS_DONT_FRAG] || tb[XFRMA_IPTFS_DROP_TIME] ||
+	    tb[XFRMA_IPTFS_REORD_WIN] || tb[XFRMA_IPTFS_INIT_DELAY]) {
+		if (prefix)
+			fputs(prefix, fp);
+		fprintf(fp, "iptfs-opts");
+
+#define _(type, name, bits)                                                    \
+	if (tb[(type)])                                                        \
+	fprintf(fp, " %s %u", name, rta_getattr_u##bits(tb[(type)]))
+		_(XFRMA_IPTFS_PKT_SIZE, "pkt-size", 32);
+		_(XFRMA_IPTFS_MAX_QSIZE, "max-queue-size", 32);
+		_(XFRMA_IPTFS_DROP_TIME, "drop-time", 32);
+		_(XFRMA_IPTFS_REORD_WIN, "reorder-window", 16);
+		_(XFRMA_IPTFS_INIT_DELAY, "init-delay", 32);
+		if (tb[XFRMA_IPTFS_DONT_FRAG])
+			fprintf(fp, " dont-frag");
+		fprintf(fp, "%s", _SL_);
+#undef _
+	}
 }
 
 static int xfrm_selector_iszero(struct xfrm_selector *s)
@@ -977,7 +997,7 @@ void xfrm_state_info_print(struct xfrm_usersa_info *xsinfo,
 	if (show_stats > 0 && tb[XFRMA_SA_EXTRA_FLAGS]) {
 		__u32 extra_flags = rta_getattr_u32(tb[XFRMA_SA_EXTRA_FLAGS]);
 
-		fprintf(fp, "extra_flag ");
+		fprintf(fp, " extra-flag ");
 		XFRM_FLAG_PRINT(fp, extra_flags,
 				XFRM_SA_XFLAG_DONT_ENCAP_DSCP,
 				"dont-encap-dscp");
